@@ -70,16 +70,10 @@ github.com/longhorn/backupstore v0.0.0-20240219094812-3a87ee02df77 h1:iJRq59kA22
 github.com/longhorn/backupstore v0.0.0-20240219094812-3a87ee02df77/go.mod h1:4cbJWtlrD2cGTQxQLtdlPTYopiJiusXH7CpOBrn/s3k=
 github.com/longhorn/go-common-libs v0.0.0-20240307063052-6e77996eda29 h1:tyzIDCMjQGQzhqAtdJaeEMAaNUZJD/sHERXp+tYc+ms=
 github.com/longhorn/go-common-libs v0.0.0-20240307063052-6e77996eda29/go.mod h1:ePLGb2r/PJBUIVoVhLOt4bLOeu0S72ZB+fWDWwC8H28=
-github.com/longhorn/go-spdk-helper v0.0.0-20240301101140-6eb6aa5fc09d h1:vajqcFlGHmyQcqhBbGMRo33GNcrKMgNY8ca87rGuKnU=
-github.com/longhorn/go-spdk-helper v0.0.0-20240301101140-6eb6aa5fc09d/go.mod h1:Zv0UpwuqZpijy5/vSW2PvR8zVPBX8CJPF3XeZAuc4Ek=
 github.com/longhorn/go-spdk-helper v0.0.0-20240308030201-9b252d6f7250 h1:bc9BtfvSuXvmztYiBCebvPWPxakbiCWBvydbeqat+Ek=
 github.com/longhorn/go-spdk-helper v0.0.0-20240308030201-9b252d6f7250/go.mod h1:re2QHb6FUU9G/CL3AnXDbzFjLNPwmweBvnTfeVpkZ1E=
 github.com/longhorn/longhorn-engine v1.6.0-dev-20240105.0.20240126141003-067f67803ee8 h1:Oj5bAlKBzS+qPxA8lfpUcbllrVjnHVCuhPcQv/V98xw=
 github.com/longhorn/longhorn-engine v1.6.0-dev-20240105.0.20240126141003-067f67803ee8/go.mod h1:Snkv3gy4AUOhZSYMI7g7lVX/OOB8DTo28eJwsEfbAwM=
-github.com/longhorn/longhorn-spdk-engine v0.0.0-20240308061103-33861f26f36e h1:OPtYaSleQOlf+VsCF3hzS96nYj1F+X0dwky+LvsLh1M=
-github.com/longhorn/longhorn-spdk-engine v0.0.0-20240308061103-33861f26f36e/go.mod h1:mgXCx3ZJpaObXmOUgczwzuYySs5Wc7SQK6sJtIRR8Ho=
-github.com/longhorn/longhorn-spdk-engine v0.0.0-20240308142500-8ac41e985506 h1:Qv28GXw+wkdpAdz0ss7yXHeVX6+dVirTeET3NJdEqj8=
-github.com/longhorn/longhorn-spdk-engine v0.0.0-20240308142500-8ac41e985506/go.mod h1:kvv2B60bReMnGLfrAoZobfCyuNS25U3UT0A5ynobxsQ=
 github.com/longhorn/nsfilelock v0.0.0-20200723175406-fa7c83ad0003 h1:Jw9uANsGcHTxp6HcC++/vN17LfeuDmozHI2j6DoZf5E=
 github.com/longhorn/nsfilelock v0.0.0-20200723175406-fa7c83ad0003/go.mod h1:0CLeXlf59Lg6C0kjLSDf47ft73Dh37CwymYRKWwAn04=
 github.com/longhorn/sparse-tools v0.0.0-20230408015858-c849def39d3c h1:EAE/cBOWZUL9CDiI4xbOr1IudQUa2e6u/pdScytEcvo=
@@ -95,6 +89,8 @@ github.com/moby/sys/mountinfo v0.6.2/go.mod h1:IJb6JQeOklcdMU9F5xQ8ZALD+CUr5VlGp
 github.com/modocache/gover v0.0.0-20171022184752-b58185e213c5/go.mod h1:caMODM3PzxT8aQXRPkAt8xlV/e7d7w8GM5g0fa5F0D8=
 github.com/mschoch/smat v0.2.0 h1:8imxQsjDm8yFEAVBe7azKmKSgzSkZXDuKkSq9374khM=
 github.com/mschoch/smat v0.2.0/go.mod h1:kc9mz7DoBKqDyiRL7VZN8KvXQMWeTaVnttLRXOlotKw=
+github.com/nirvati/longhorn-spdk-engine v0.0.0-20240224230411-48b5ce1f7748 h1:e958T+PkSpBppUIc0ClHiYldsUZzvT9W+WnLLGiL+z4=
+github.com/nirvati/longhorn-spdk-engine v0.0.0-20240224230411-48b5ce1f7748/go.mod h1:YBfCONov4UINPahOKmnuVBRGPhfVHOuEgJnhDtQfYt4=
 github.com/pierrec/lz4/v4 v4.1.17 h1:kV4Ip+/hUBC+8T6+2EgburRtkE9ef4nbY3f4dFhGjMc=
 github.com/pierrec/lz4/v4 v4.1.17/go.mod h1:gZWDp/Ze/IJXGXf23ltt2EXimqmTUXEy0GFuRQyBid4=
 github.com/pkg/diff v0.0.0-20210226163009-20ebb0f2a09e/go.mod h1:pJLUxLENpZxwdsKMEsNbx1VGcRFpLqf3715MtcvvzbA=

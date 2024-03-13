@@ -178,7 +178,7 @@ github.com/longhorn/longhorn-engine/pkg/types
 github.com/longhorn/longhorn-engine/pkg/util
 github.com/longhorn/longhorn-engine/pkg/util/disk
 github.com/longhorn/longhorn-engine/proto/ptypes
-# github.com/longhorn/longhorn-spdk-engine v0.0.0-20240308142500-8ac41e985506
+# github.com/longhorn/longhorn-spdk-engine v0.0.0-20240308142500-50ded5048249 => github.com/nirvati/longhorn-spdk-engine v0.0.0-20240224230411-48b5ce1f7748
 ## explicit; go 1.21
 github.com/longhorn/longhorn-spdk-engine/pkg/api
 github.com/longhorn/longhorn-spdk-engine/pkg/client
@@ -422,3 +422,4 @@ k8s.io/utils/internal/third_party/forked/golang/net
 k8s.io/utils/io
 k8s.io/utils/keymutex
 k8s.io/utils/net
+# github.com/longhorn/longhorn-spdk-engine => github.com/nirvati/longhorn-spdk-engine v0.0.0-20240224230411-48b5ce1f7748

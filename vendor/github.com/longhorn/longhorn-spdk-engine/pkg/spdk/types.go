@@ -93,7 +93,7 @@ func GetBdevMap(cli *spdkclient.Client) (map[string]*spdktypes.BdevInfo, error) 
 }
 
 func GetBdevLvolMap(cli *spdkclient.Client) (map[string]*spdktypes.BdevInfo, error) {
-	bdevList, err := cli.BdevLvolGet("", 0)
+	bdevList, err := cli.BdevGetBdevs("", 0)
 	if err != nil {
 		return nil, err
 	}

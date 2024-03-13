@@ -169,7 +169,7 @@ func getDiskID(filename string) (string, error) {
 		return "", errors.Wrap(err, "failed to detect disk device")
 	}
 
-	return fmt.Sprintf("%d-%d", dev.Nvme.Major, dev.Nvme.Minor), nil
+	return fmt.Sprintf("%d-%d", dev.Export.Major, dev.Export.Minor), nil
 }
 
 func getDiskDeviceSize(path string) (int64, error) {

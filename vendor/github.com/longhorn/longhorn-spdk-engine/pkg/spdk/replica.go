@@ -24,7 +24,6 @@ import (
 	helpertypes "github.com/longhorn/go-spdk-helper/pkg/types"
 	helperutil "github.com/longhorn/go-spdk-helper/pkg/util"
 
-	"github.com/longhorn/longhorn-spdk-engine/pkg/api"
 	"github.com/longhorn/longhorn-spdk-engine/pkg/types"
 	"github.com/longhorn/longhorn-spdk-engine/pkg/util"
 	"github.com/longhorn/longhorn-spdk-engine/proto/spdkrpc"
@@ -93,7 +92,6 @@ type Lvol struct {
 	// Children is map[<snapshot lvol name>] rather than map[<snapshot name>]. <snapshot lvol name> consists of `<replica name>-snap-<snapshot name>`
 	Children     map[string]*Lvol
 	CreationTime string
-	UserCreated  bool
 }
 
 func ServiceReplicaToProtoReplica(r *Replica) *spdkrpc.Replica {
@@ -127,7 +125,6 @@ func ServiceLvolToProtoLvol(replicaName string, lvol *Lvol) *spdkrpc.Lvol {
 		Parent:       GetSnapshotNameFromReplicaSnapshotLvolName(replicaName, lvol.Parent),
 		Children:     map[string]bool{},
 		CreationTime: lvol.CreationTime,
-		UserCreated:  lvol.UserCreated,
 	}
 
 	if lvol.Name == replicaName {
@@ -159,7 +156,6 @@ func BdevLvolInfoToServiceLvol(bdev *spdktypes.BdevInfo) *Lvol {
 		// Need to update this separately
 		Children:     map[string]*Lvol{},
 		CreationTime: bdev.CreationTime,
-		UserCreated:  bdev.DriverSpecific.Lvol.Xattrs[spdkclient.UserCreated] == "true",
 	}
 }
 
@@ -786,7 +782,7 @@ func (r *Replica) Get() (pReplica *spdkrpc.Replica) {
 	return ServiceReplicaToProtoReplica(r)
 }
 
-func (r *Replica) SnapshotCreate(spdkClient *spdkclient.Client, snapshotName string, opts *api.SnapshotOptions) (pReplica *spdkrpc.Replica, err error) {
+func (r *Replica) SnapshotCreate(spdkClient *spdkclient.Client, snapshotName string) (pReplica *spdkrpc.Replica, err error) {
 	updateRequired := false
 
 	r.Lock()
@@ -826,16 +822,7 @@ func (r *Replica) SnapshotCreate(spdkClient *spdkclient.Client, snapshotName str
 	}
 	headSvcLvol := r.ActiveChain[r.ChainLength-1]
 
-	var xattrs []spdkclient.Xattr
-	if opts != nil {
-		xattr := spdkclient.Xattr{
-			Name:  spdkclient.UserCreated,
-			Value: strconv.FormatBool(opts.UserCreated),
-		}
-		xattrs = append(xattrs, xattr)
-	}
-
-	snapUUID, err := spdkClient.BdevLvolSnapshot(headSvcLvol.UUID, snapLvolName, xattrs)
+	snapUUID, err := spdkClient.BdevLvolSnapshot(headSvcLvol.UUID, snapLvolName, nil)
 	if err != nil {
 		return nil, err
 	}
@@ -1403,7 +1390,7 @@ func (r *Replica) RebuildingDstFinish(spdkClient *spdkclient.Client, unexposeReq
 // 	return nil
 // }
 
-func (r *Replica) RebuildingDstSnapshotCreate(spdkClient *spdkclient.Client, snapshotName string, opts *api.SnapshotOptions) (err error) {
+func (r *Replica) RebuildingDstSnapshotCreate(spdkClient *spdkclient.Client, snapshotName string) (err error) {
 	updateRequired := false
 
 	r.Lock()
@@ -1439,17 +1426,8 @@ func (r *Replica) RebuildingDstSnapshotCreate(spdkClient *spdkclient.Client, sna
 		}
 	}()
 
-	var xattrs []spdkclient.Xattr
-	if opts != nil {
-		xattr := spdkclient.Xattr{
-			Name:  spdkclient.UserCreated,
-			Value: strconv.FormatBool(opts.UserCreated),
-		}
-		xattrs = append(xattrs, xattr)
-	}
-
 	snapLvolName := GetReplicaSnapshotLvolName(r.Name, snapshotName)
-	snapUUID, err := spdkClient.BdevLvolSnapshot(r.rebuildingLvol.UUID, snapLvolName, xattrs)
+	snapUUID, err := spdkClient.BdevLvolSnapshot(r.rebuildingLvol.UUID, snapLvolName, nil)
 	if err != nil {
 		return err
 	}
@@ -1731,7 +1709,7 @@ func (r *Replica) postFullRestoreOperations(spdkClient *spdkclient.Client, resto
 
 	r.log.Infof("Taking snapshot %v of the restored volume", restore.SnapshotName)
 
-	_, err := r.SnapshotCreate(spdkClient, restore.SnapshotName, nil)
+	_, err := r.SnapshotCreate(spdkClient, restore.SnapshotName)
 	if err != nil {
 		r.log.WithError(err).Error("Failed to take snapshot of the restored volume")
 		return errors.Wrapf(err, "failed to take snapshot of the restored volume")

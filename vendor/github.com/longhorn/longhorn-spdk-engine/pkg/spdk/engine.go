@@ -169,6 +169,63 @@ func (e *Engine) Create(spdkClient *spdkclient.Client, replicaAddressMap, localR
 	return e.getWithoutLock(), nil
 }
 
+func (e *Engine) resizeVolume(spdkClient *spdkclient.Client, size uint64) (err error) {
+	e.Lock()
+	defer e.Unlock()
+
+	if e.State != types.InstanceStateRunning {
+		return fmt.Errorf("invalid state %s for engine %s resize bdev", e.State, e.Name)
+	}
+
+	roundedSize := util.RoundUp(size, helpertypes.MiB)
+	if roundedSize != size {
+		e.log.Infof("Rounded up spec size from %v to %v since the spec size should be multiple of MiB", size, roundedSize)
+	}
+	e.log.WithField("specSize", size)
+
+	if e.SpecSize == roundedSize {
+		return nil
+	}
+
+	if roundedSize < e.ActualSize {
+		return fmt.Errorf("cannot shrink the engine %s bdev size from %d to %d", e.Name, e.ActualSize, size)
+	}
+	
+	// Now, we need to resize each replica
+	for replicaName, replicaAddress := range e.ReplicaAddressMap {
+		if e.ReplicaModeMap[replicaName] != types.ModeRW {
+			continue
+		}
+		if err := e.resizeReplica(spdkClient, replicaName, replicaAddress, roundedSize); err != nil {
+			return err
+		}
+	}
+	
+	e.SpecSize = roundedSize
+	e.log.Infof("Resized engine %s bdev size to %d", e.Name, e.SpecSize)
+	return nil
+}
+
+func (e *Engine) resizeReplica(spdkClient *spdkclient.Client, replicaName, replicaAddress string, size uint64) (err error) {
+	replicaIP, _, err := net.SplitHostPort(replicaAddress)
+	if err != nil {
+		return err
+	}
+	if replicaIP == e.IP {
+		return nil
+	}
+
+	bdevName := e.ReplicaBdevNameMap[replicaName]
+	if bdevName == "" {
+		return nil
+	}
+	if _, err := spdkClient.BdevLvolResize(bdevName, size); err != nil {
+		return err
+	}
+
+	return nil
+}
+
 func (e *Engine) getBdevNameForReplica(spdkClient *spdkclient.Client, localReplicaLvsNameMap map[string]string, replicaName, replicaAddress, podIP string) (bdevName string, err error) {
 	replicaIP, _, err := net.SplitHostPort(replicaAddress)
 	if err != nil {
@@ -788,7 +845,7 @@ func (e *Engine) ReplicaAddStart(spdkClient *spdkclient.Client, replicaName, rep
 
 	// TODO: For online rebuilding, the IO should be paused first
 	snapshotName := GenerateRebuildingSnapshotName()
-	updateRequired, err = e.snapshotOperationWithoutLock(spdkClient, replicaClients, snapshotName, SnapshotOperationCreate, nil)
+	updateRequired, err = e.snapshotOperationWithoutLock(spdkClient, replicaClients, snapshotName, SnapshotOperationCreate)
 	if err != nil {
 		return err
 	}
@@ -979,7 +1036,7 @@ func (e *Engine) ReplicaShallowCopy(dstReplicaName, dstReplicaAddress string) (e
 		if err = srcReplicaServiceCli.ReplicaSnapshotShallowCopy(srcReplicaName, currentSnapshotName); err != nil {
 			return err
 		}
-		if err = dstReplicaServiceCli.ReplicaRebuildingDstSnapshotCreate(dstReplicaName, currentSnapshotName, &api.SnapshotOptions{UserCreated: rpcSrcReplica.Snapshots[currentSnapshotName].UserCreated}); err != nil {
+		if err = dstReplicaServiceCli.ReplicaRebuildingDstSnapshotCreate(dstReplicaName, currentSnapshotName); err != nil {
 			return err
 		}
 		prevSnapshotName = currentSnapshotName
@@ -1067,21 +1124,21 @@ const (
 	SnapshotOperationRevert = SnapshotOperationType("snapshot-revert")
 )
 
-func (e *Engine) SnapshotCreate(spdkClient *spdkclient.Client, inputSnapshotName string, opts *api.SnapshotOptions) (snapshotName string, err error) {
-	return e.snapshotOperation(spdkClient, inputSnapshotName, SnapshotOperationCreate, opts)
+func (e *Engine) SnapshotCreate(spdkClient *spdkclient.Client, inputSnapshotName string) (snapshotName string, err error) {
+	return e.snapshotOperation(spdkClient, inputSnapshotName, SnapshotOperationCreate)
 }
 
 func (e *Engine) SnapshotDelete(spdkClient *spdkclient.Client, snapshotName string) (err error) {
-	_, err = e.snapshotOperation(spdkClient, snapshotName, SnapshotOperationDelete, nil)
+	_, err = e.snapshotOperation(spdkClient, snapshotName, SnapshotOperationDelete)
 	return err
 }
 
 func (e *Engine) SnapshotRevert(spdkClient *spdkclient.Client, snapshotName string) (err error) {
-	_, err = e.snapshotOperation(spdkClient, snapshotName, SnapshotOperationRevert, nil)
+	_, err = e.snapshotOperation(spdkClient, snapshotName, SnapshotOperationRevert)
 	return err
 }
 
-func (e *Engine) snapshotOperation(spdkClient *spdkclient.Client, inputSnapshotName string, snapshotOp SnapshotOperationType, opts *api.SnapshotOptions) (snapshotName string, err error) {
+func (e *Engine) snapshotOperation(spdkClient *spdkclient.Client, inputSnapshotName string, snapshotOp SnapshotOperationType) (snapshotName string, err error) {
 	updateRequired := false
 
 	if snapshotOp == SnapshotOperationCreate {
@@ -1143,7 +1200,7 @@ func (e *Engine) snapshotOperation(spdkClient *spdkclient.Client, inputSnapshotN
 		}
 	}()
 
-	if updateRequired, err = e.snapshotOperationWithoutLock(spdkClient, replicaClients, snapshotName, snapshotOp, opts); err != nil {
+	if updateRequired, err = e.snapshotOperationWithoutLock(spdkClient, replicaClients, snapshotName, snapshotOp); err != nil {
 		return "", err
 	}
 
@@ -1219,7 +1276,7 @@ func (e *Engine) snapshotOperationPreCheckWithoutLock(replicaClients map[string]
 	return snapshotName, nil
 }
 
-func (e *Engine) snapshotOperationWithoutLock(spdkClient *spdkclient.Client, replicaClients map[string]*client.SPDKClient, snapshotName string, snapshotOp SnapshotOperationType, opts *api.SnapshotOptions) (updated bool, err error) {
+func (e *Engine) snapshotOperationWithoutLock(spdkClient *spdkclient.Client, replicaClients map[string]*client.SPDKClient, snapshotName string, snapshotOp SnapshotOperationType) (updated bool, err error) {
 	if snapshotOp == SnapshotOperationRevert {
 		if _, err := spdkClient.BdevRaidDelete(e.Name); err != nil && !jsonrpc.IsJSONRPCRespErrorNoSuchDevice(err) {
 			e.log.WithError(err).Errorf("Failed to delete RAID after snapshot %s revert", snapshotName)
@@ -1228,7 +1285,7 @@ func (e *Engine) snapshotOperationWithoutLock(spdkClient *spdkclient.Client, rep
 	}
 
 	for replicaName := range replicaClients {
-		if err := e.replicaSnapshotOperation(spdkClient, replicaClients[replicaName], replicaName, snapshotName, snapshotOp, opts); err != nil && e.ReplicaModeMap[replicaName] != types.ModeERR {
+		if err := e.replicaSnapshotOperation(spdkClient, replicaClients[replicaName], replicaName, snapshotName, snapshotOp); err != nil && e.ReplicaModeMap[replicaName] != types.ModeERR {
 			e.ReplicaModeMap[replicaName] = types.ModeERR
 			e.ReplicaBdevNameMap[replicaName] = ""
 			e.log.WithError(err).Errorf("Failed to issue operation %s for replica %s snapshot %s, will mark the replica as mode ERR", snapshotOp, replicaName, snapshotName)
@@ -1256,11 +1313,11 @@ func (e *Engine) snapshotOperationWithoutLock(spdkClient *spdkclient.Client, rep
 	return updated, nil
 }
 
-func (e *Engine) replicaSnapshotOperation(spdkClient *spdkclient.Client, replicaClient *client.SPDKClient, replicaName, snapshotName string, snapshotOp SnapshotOperationType, opts *api.SnapshotOptions) error {
+func (e *Engine) replicaSnapshotOperation(spdkClient *spdkclient.Client, replicaClient *client.SPDKClient, replicaName, snapshotName string, snapshotOp SnapshotOperationType) error {
 	switch snapshotOp {
 	case SnapshotOperationCreate:
 		// TODO: execute `sync` for the nvme initiator before snapshot start
-		return replicaClient.ReplicaSnapshotCreate(replicaName, snapshotName, opts)
+		return replicaClient.ReplicaSnapshotCreate(replicaName, snapshotName)
 	case SnapshotOperationDelete:
 		return replicaClient.ReplicaSnapshotDelete(replicaName, snapshotName)
 	case SnapshotOperationRevert:

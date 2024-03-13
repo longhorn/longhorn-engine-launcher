@@ -451,7 +451,7 @@ func (s *Server) ReplicaSnapshotCreate(ctx context.Context, req *spdkrpc.Snapsho
 		return nil, grpcstatus.Errorf(grpccodes.NotFound, "cannot find replica %s during snapshot create", req.Name)
 	}
 
-	return r.SnapshotCreate(spdkClient, req.SnapshotName, &api.SnapshotOptions{UserCreated: req.UserCreated})
+	return r.SnapshotCreate(spdkClient, req.SnapshotName)
 }
 
 func (s *Server) ReplicaSnapshotDelete(ctx context.Context, req *spdkrpc.SnapshotRequest) (ret *emptypb.Empty, err error) {
@@ -659,7 +659,7 @@ func (s *Server) ReplicaRebuildingDstSnapshotCreate(ctx context.Context, req *sp
 		return nil, grpcstatus.Errorf(grpccodes.NotFound, "cannot find replica %s during rebuilding dst snapshot create", req.Name)
 	}
 
-	if err = r.RebuildingDstSnapshotCreate(spdkClient, req.SnapshotName, &api.SnapshotOptions{UserCreated: req.UserCreated}); err != nil {
+	if err = r.RebuildingDstSnapshotCreate(spdkClient, req.SnapshotName); err != nil {
 		return nil, err
 	}
 	return &emptypb.Empty{}, nil
@@ -893,11 +893,7 @@ func (s *Server) EngineSnapshotCreate(ctx context.Context, req *spdkrpc.Snapshot
 		return nil, grpcstatus.Errorf(grpccodes.NotFound, "cannot find engine %v for snapshot creation", req.Name)
 	}
 
-	opts := api.SnapshotOptions{
-		UserCreated: req.UserCreated,
-	}
-
-	snapshotName, err := e.SnapshotCreate(spdkClient, req.SnapshotName, &opts)
+	snapshotName, err := e.SnapshotCreate(spdkClient, req.SnapshotName)
 	return &spdkrpc.SnapshotResponse{SnapshotName: snapshotName}, err
 }
 
@@ -1142,6 +1138,21 @@ func (s *Server) EngineRestoreStatus(ctx context.Context, req *spdkrpc.RestoreSt
 		return nil, grpcstatus.Errorf(grpccodes.Internal, err.Error())
 	}
 	return resp, nil
+}
+
+func (s *Server) EngineVolumeResize(ctx context.Context, req *spdkrpc.EngineVolumeResizeRequest) (ret *emptypb.Empty, err error) {
+	s.RLock()
+	e := s.engineMap[req.EngineName]
+	s.RUnlock()
+
+	if e == nil {
+		return nil, grpcstatus.Errorf(grpccodes.NotFound, "cannot find engine %v for volume resize", req.EngineName)
+	}
+
+	if err := e.resizeVolume(s.spdkClient, req.Size); err != nil {
+		return nil, err
+	}
+	return &emptypb.Empty{}, nil
 }
 
 func (s *Server) ReplicaRestoreStatus(ctx context.Context, req *spdkrpc.ReplicaRestoreStatusRequest) (ret *spdkrpc.ReplicaRestoreStatusResponse, err error) {
