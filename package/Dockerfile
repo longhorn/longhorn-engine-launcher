@@ -2,6 +2,7 @@
 FROM  registry.suse.com/bci/golang:1.23 AS gobuilder
 
 ARG ARCH=amd64
+ARG DEP_VERSION_FILE=versions.json
 
 RUN zypper -n ref && \
     zypper update -y
@@ -15,33 +16,28 @@ ENV GOLANG_ARCH_amd64=amd64 GOLANG_ARCH_arm64=arm64 GOLANG_ARCH_s390x=s390x GOLA
     GOPATH=/go PATH=/go/bin:/usr/local/go/bin:${PATH} SHELL=/bin/bash
 RUN go install golang.org/x/lint/golint@latest
 
+COPY ${DEP_VERSION_FILE} /versions.json
+
 # Build go-spdk-helper
-ENV GO_SPDK_HELPER_DIR /usr/src/go-spdk-helper
-ENV GO_SPDK_HELPER_COMMIT_ID 6187c63541294a2fa0d792c766ce905d23dac1df
-RUN git clone https://github.com/longhorn/go-spdk-helper.git ${GO_SPDK_HELPER_DIR} && \
-    cd ${GO_SPDK_HELPER_DIR} && \
+RUN export GO_SPDK_HELPER_REPO=$(jq -r '.["go-spdk-helper"].repo' /versions.json) && \
+    export GO_SPDK_HELPER_COMMIT_ID=$(jq -r '.["go-spdk-helper"].commit' /versions.json) && \
+    cd /usr/src && \
+    git clone ${GO_SPDK_HELPER_REPO} go-spdk-helper && \
+    cd go-spdk-helper && \
     git checkout ${GO_SPDK_HELPER_COMMIT_ID} && \
     go build && \
-    install -m 755 go-spdk-helper /usr/local/bin/go-spdk-helper && \
-    rm -rf ${GO_SPDK_HELPER_DIR}
+    install -m 755 go-spdk-helper /usr/local/bin/go-spdk-helper
 
 # Install grpc_health_probe
 RUN GRPC_HEALTH_PROBE_DOWNLOAD_URL=$(wget -qO- https://api.github.com/repos/grpc-ecosystem/grpc-health-probe/releases/latest | jq -r '.assets[] | select(.name | test("linux.*'"${ARCH}"'"; "i")) | .browser_download_url') && \
     wget ${GRPC_HEALTH_PROBE_DOWNLOAD_URL} -O /usr/local/bin/grpc_health_probe && \
     chmod +x /usr/local/bin/grpc_health_probe
 
-
 # Stage 2: build binary from c source code
 FROM registry.suse.com/bci/bci-base:15.6 AS cbuilder
 
 ARG ARCH=amd64
-
-ENV LIBLONGHORN_COMMIT_ID 53d1c063b95efc8d949b095bd4bf04637230265f
-ENV TGT_COMMIT_ID 3a8bc4823b5390e046f7aa8231ed262c0365c42c
-ENV SPDK_COMMIT_ID 1975133e993723bc9ec3bd46862f4e5efe3b3fd1
-ENV LIBJSONC_COMMIT_ID b4c371fa0cbc4dcbaccc359ce9e957a22988fb34
-# nvme-cli 2.10.2
-ENV NVME_CLI_COMMIT_ID eeaa08c9a0e9184f3889df0bff3d2a23db6d6294
+ARG DEP_VERSION_FILE=versions.json
 
 RUN zypper -n ref && \
     zypper update -y
@@ -55,28 +51,36 @@ RUN zypper -n addrepo --refresh https://download.opensuse.org/repositories/syste
     zypper -n addrepo --refresh https://download.opensuse.org/repositories/filesystems/15.6/filesystems.repo && \
     zypper --gpg-auto-import-keys ref
 
-RUN zypper -n install cmake gcc xsltproc docbook-xsl-stylesheets git python311 python311-pip patchelf fuse3-devel
+RUN zypper -n install cmake gcc xsltproc docbook-xsl-stylesheets git python311 python311-pip patchelf fuse3-devel jq
+
+COPY ${DEP_VERSION_FILE} /versions.json
 
 # Build liblonghorn
-RUN cd /usr/src && \
-    git clone https://github.com/rancher/liblonghorn.git && \
+RUN export LIBLONGHORN_REPO=$(jq -r '.["liblonghorn"].repo' /versions.json) && \
+    export LIBLONGHORN_COMMIT_ID=$(jq -r '.["liblonghorn"].commit' /versions.json) && \
+    cd /usr/src && \
+    git clone ${LIBLONGHORN_REPO} && \
     cd liblonghorn && \
     git checkout ${LIBLONGHORN_COMMIT_ID} && \
-    make; \
+    make && \
     make install
 
 # Build TGT
-RUN cd /usr/src && \
-    git clone https://github.com/rancher/tgt.git && \
+RUN export TGT_REPO=$(jq -r '.["tgt"].repo' /versions.json) && \
+    export TGT_COMMIT_ID=$(jq -r '.["tgt"].commit' /versions.json) && \
+    cd /usr/src && \
+    git clone ${TGT_REPO} && \
     cd tgt && \
     git checkout ${TGT_COMMIT_ID} && \
     make; \
     make install
 
 # Build spdk
-ENV SPDK_DIR /usr/src/spdk
-RUN git clone https://github.com/longhorn/spdk.git ${SPDK_DIR} --recursive && \
-    cd ${SPDK_DIR} && \
+RUN export SPDK_REPO=$(jq -r '.["spdk"].repo' /versions.json) && \
+    export SPDK_COMMIT_ID=$(jq -r '.["spdk"].commit' /versions.json) && \
+    cd /usr/src && \
+    git clone ${SPDK_REPO} spdk --recursive && \
+    cd spdk && \
     git checkout ${SPDK_COMMIT_ID} && \
     git submodule update --init && \
     sed -i '/python3-pyelftools/d' ./scripts/pkgdep/sles.sh && \
@@ -97,8 +101,10 @@ RUN git clone https://github.com/longhorn/spdk.git ${SPDK_DIR} --recursive && \
     fi
 
 # Build libjson-c-devel
-RUN cd /usr/src && \
-    git clone https://github.com/json-c/json-c.git && \
+RUN export LIBJSONC_REPO=$(jq -r '.["libjsonc"].repo' /versions.json) && \
+    export LIBJSONC_COMMIT_ID=$(jq -r '.["libjsonc"].commit' /versions.json) && \
+    cd /usr/src && \
+    git clone ${LIBJSONC_REPO} && \
     cd json-c && \
     git checkout ${LIBJSONC_COMMIT_ID} && \
     mkdir .build && \
@@ -108,14 +114,15 @@ RUN cd /usr/src && \
     make install
 
 # Build nvme-cli
-ENV NVME_CLI_DIR /usr/src/nvme-cli
-RUN git clone https://github.com/linux-nvme/nvme-cli.git ${NVME_CLI_DIR} && \
-    cd ${NVME_CLI_DIR} && \
+RUN export NVME_CLI_REPO=$(jq -r '.["nvme-cli"].repo' /versions.json) && \
+    export NVME_CLI_COMMIT_ID=$(jq -r '.["nvme-cli"].commit' /versions.json) && \
+    cd /usr/src && \
+    git clone ${NVME_CLI_REPO} && \
+    cd nvme-cli && \
     git checkout ${NVME_CLI_COMMIT_ID} && \
     meson setup --force-fallback-for=libnvme .build && \
     meson compile -C .build && \
     meson install -C .build
-
 
 # Stage 3: copy binaries to release image
 FROM registry.suse.com/bci/bci-base:15.6 AS release
