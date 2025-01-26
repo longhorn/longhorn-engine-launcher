@@ -210,7 +210,7 @@ github.com/kr/pretty
 # github.com/kr/text v0.2.0
 ## explicit
 github.com/kr/text
-# github.com/longhorn/backupstore v0.0.0-20241218004307-b75ee1322085
+# github.com/longhorn/backupstore v0.0.0-20241227145911-8de988de7eff
 ## explicit; go 1.22.7
 github.com/longhorn/backupstore
 github.com/longhorn/backupstore/azblob
@@ -223,7 +223,7 @@ github.com/longhorn/backupstore/s3
 github.com/longhorn/backupstore/types
 github.com/longhorn/backupstore/util
 github.com/longhorn/backupstore/vfs
-# github.com/longhorn/go-common-libs v0.0.0-20241218045609-c76c9e237a7d
+# github.com/longhorn/go-common-libs v0.0.0-20241227132452-5a6ca245288a
 ## explicit; go 1.22.7
 github.com/longhorn/go-common-libs/backup
 github.com/longhorn/go-common-libs/bitmap
@@ -238,7 +238,7 @@ github.com/longhorn/go-common-libs/sync
 github.com/longhorn/go-common-libs/sys
 github.com/longhorn/go-common-libs/types
 github.com/longhorn/go-common-libs/utils
-# github.com/longhorn/go-iscsi-helper v0.0.0-20241216160354-6e5f17558cef
+# github.com/longhorn/go-iscsi-helper v0.0.0-20241227145851-edeefa73a30d
 ## explicit; go 1.22.7
 github.com/longhorn/go-iscsi-helper/iscsi
 github.com/longhorn/go-iscsi-helper/iscsidev
@@ -254,7 +254,7 @@ github.com/longhorn/go-spdk-helper/pkg/spdk/setup
 github.com/longhorn/go-spdk-helper/pkg/spdk/types
 github.com/longhorn/go-spdk-helper/pkg/types
 github.com/longhorn/go-spdk-helper/pkg/util
-# github.com/longhorn/longhorn-engine v1.7.3-dev-20241215.0.20241216174127-932253f43c96
+# github.com/longhorn/longhorn-engine v1.7.3-dev-20250126
 ## explicit; go 1.22.7
 github.com/longhorn/longhorn-engine/pkg/backingfile
 github.com/longhorn/longhorn-engine/pkg/controller/client
@@ -283,12 +283,12 @@ github.com/longhorn/longhorn-spdk-engine/pkg/util/broadcaster
 # github.com/longhorn/nsfilelock v0.0.0-20200723175406-fa7c83ad0003
 ## explicit
 github.com/longhorn/nsfilelock
-# github.com/longhorn/sparse-tools v0.0.0-20241124090628-9499c1fb63d7
+# github.com/longhorn/sparse-tools v0.0.0-20241216160947-2b328f0fa59c
 ## explicit; go 1.22.0
 github.com/longhorn/sparse-tools/sparse
 github.com/longhorn/sparse-tools/types
 github.com/longhorn/sparse-tools/util
-# github.com/longhorn/types v0.0.0-20241217083824-2e0ecb487ccf
+# github.com/longhorn/types v0.0.0-20241225162202-00d3a5fd7502
 ## explicit; go 1.22.7
 github.com/longhorn/types/pkg/generated/enginerpc
 github.com/longhorn/types/pkg/generated/imrpc
@@ -393,7 +393,7 @@ github.com/yusufpapurcu/wmi
 # go.uber.org/multierr v1.11.0
 ## explicit; go 1.19
 go.uber.org/multierr
-# golang.org/x/exp v0.0.0-20241215155358-4a5509556b9e
+# golang.org/x/exp v0.0.0-20241217172543-b2144cdd0a67
 ## explicit; go 1.22.0
 golang.org/x/exp/constraints
 # golang.org/x/net v0.32.0
@@ -434,7 +434,7 @@ golang.org/x/time/rate
 # google.golang.org/genproto/googleapis/rpc v0.0.0-20241015192408-796eee8c2d53
 ## explicit; go 1.21
 google.golang.org/genproto/googleapis/rpc/status
-# google.golang.org/grpc v1.69.0
+# google.golang.org/grpc v1.69.2
 ## explicit; go 1.22
 google.golang.org/grpc
 google.golang.org/grpc/attributes
