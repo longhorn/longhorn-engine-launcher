@@ -39,7 +39,54 @@ do
     docker pull "$BASE_IMAGE"
 done
 
-docker build --build-arg ARCH=${ARCH} -t ${IMAGE} -f package/Dockerfile .
+function convert_version_to_major_minor_x() {
+    local version="$1"
+    if [[ "$version" =~ ^v([0-9]+)\.([0-9]+)\. ]]; then
+        echo "v${BASH_REMATCH[1]}.${BASH_REMATCH[2]}.x"
+    else
+        echo "Invalid version format: $version"
+    fi
+}
+
+
+function convert_version_to_major_minor_x() {
+    local version="$1"
+    if [[ "$version" =~ ^v([0-9]+)\.([0-9]+)\. ]]; then
+        echo "v${BASH_REMATCH[1]}.${BASH_REMATCH[2]}.x"
+    else
+        echo "Invalid version format: $version"
+    fi
+}
+
+function get_branch() {
+  local version_file="version"
+  if [[ ! -f $version_file ]]; then
+    echo "Error: Version file '$version_file' not found."
+    exit 1
+  fi
+
+  local version=$(cat "$version_file")
+  local branch=$(convert_version_to_major_minor_x "$version")
+
+  echo "${branch}"
+}
+
+BRANCH=$(get_branch)
+
+wget -q "https://raw.githubusercontent.com/longhorn/dep-versions/refs/heads/${BRANCH}/versions.json" -O package/versions.json || {
+  echo "Failed to fetch from branch $BRANCH, trying main branch..."
+  wget -q "https://raw.githubusercontent.com/longhorn/dep-versions/refs/heads/main/versions.json" -O package/versions.json || {
+    echo "Failed to fetch from main branch. Exiting."
+    exit 1
+  }
+}
+
+echo "Building ${IMAGE} with ARCH=${ARCH} BRANCH=${BRANCH}"
+docker build \
+  --build-arg ARCH="${ARCH}" \
+  --build-arg DEP_VERSION_FILE=package/versions.json \
+  -t "${IMAGE}" \
+  -f package/Dockerfile .
 
 echo Built ${IMAGE}
 
