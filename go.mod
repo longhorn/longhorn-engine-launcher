@@ -2,16 +2,16 @@ module github.com/longhorn/longhorn-instance-manager
 
 go 1.22.7
 
-toolchain go1.23.4
+toolchain go1.23.6
 
 require (
 	github.com/google/uuid v1.6.0
-	github.com/longhorn/backupstore v0.0.0-20241218004307-b75ee1322085
-	github.com/longhorn/go-common-libs v0.0.0-20241218045609-c76c9e237a7d
+	github.com/longhorn/backupstore v0.0.0-20250204055542-0f659475ac46
+	github.com/longhorn/go-common-libs v0.0.0-20250204050409-8ebd4432fd70
 	github.com/longhorn/go-spdk-helper v0.0.0-20240820144231-33c0873802ff
 	github.com/longhorn/longhorn-engine v1.7.3-dev-20241215.0.20241216174127-932253f43c96
 	github.com/longhorn/longhorn-spdk-engine v0.0.0-20240821075759-df0d2ae1b9bb
-	github.com/longhorn/types v0.0.0-20241217083824-2e0ecb487ccf
+	github.com/longhorn/types v0.0.0-20241225162202-00d3a5fd7502
 	github.com/pkg/errors v0.9.1
 	github.com/sirupsen/logrus v1.9.3
 	github.com/urfave/cli v1.22.16
@@ -29,7 +29,7 @@ require (
 	github.com/Azure/azure-sdk-for-go/sdk/internal v1.10.0 // indirect
 	github.com/Azure/azure-sdk-for-go/sdk/storage/azblob v1.5.0 // indirect
 	github.com/RoaringBitmap/roaring v1.9.4 // indirect
-	github.com/aws/aws-sdk-go v1.55.5 // indirect
+	github.com/aws/aws-sdk-go v1.55.6 // indirect
 	github.com/beorn7/perks v1.0.1 // indirect
 	github.com/bits-and-blooms/bitset v1.12.0 // indirect
 	github.com/c9s/goprocinfo v0.0.0-20210130143923-c95fcf8c64a8 // indirect
@@ -87,7 +87,7 @@ require (
 	github.com/x448/float16 v0.8.4 // indirect
 	github.com/yusufpapurcu/wmi v1.2.4 // indirect
 	go.uber.org/multierr v1.11.0 // indirect
-	golang.org/x/exp v0.0.0-20241215155358-4a5509556b9e // indirect
+	golang.org/x/exp v0.0.0-20250128182459-e0ece0dbea4c // indirect
 	golang.org/x/oauth2 v0.23.0 // indirect
 	golang.org/x/sys v0.29.0 // indirect
 	golang.org/x/term v0.28.0 // indirect
